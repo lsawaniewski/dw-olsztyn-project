@@ -3,7 +3,6 @@ import cv2
 import face_recognition
 import copy
 
-# import time
 from datetime import datetime
 import pandas as pd
 from jambox_grabber import Jambox
@@ -37,7 +36,7 @@ db.setup_table()
 last_recognitions = {}
 
 # main loop
-try:    
+try:
     while True:
 
         if jb.is_ready():
@@ -54,7 +53,9 @@ try:
 
                 if len(face_locations) > 0:
                     # build face encodings
-                    face_encodings = face_recognition.face_encodings(frame, face_locations)
+                    face_encodings = face_recognition.face_encodings(
+                        frame, face_locations
+                    )
 
                     # compare encodings with known faces
                     names = [
@@ -93,7 +94,10 @@ try:
                 montage_frames = list(frames.values())
                 montage = imutils.build_montages(
                     image_list=montage_frames,
-                    image_shape=(montage_frames[0].shape[1], montage_frames[0].shape[0]),
+                    image_shape=(
+                        montage_frames[0].shape[1],
+                        montage_frames[0].shape[0],
+                    ),
                     montage_shape=(1, len(montage_frames)),
                 )[0]
                 cv2.imshow("Captured_frames", montage)
@@ -110,6 +114,6 @@ try:
 except Exception as e:
     print(e)
 finally:
-# cleanup
-cv2.destroyAllWindows()
-jb.close_browsers()
+    # cleanup
+    cv2.destroyAllWindows()
+    jb.close_browsers()
