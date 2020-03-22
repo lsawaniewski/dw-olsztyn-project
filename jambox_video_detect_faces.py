@@ -37,75 +37,79 @@ db.setup_table()
 last_recognitions = {}
 
 # main loop
-while True:
-    if jb.is_ready():
+try:    
+    while True:
 
-        # grab frames
-        jb.update_frames()
-        frames = jb.frames
+        if jb.is_ready():
 
-        # loop over the frames
-        for source, frame in frames.items():
+            # grab frames
+            jb.update_frames()
+            frames = jb.frames
 
-            # detect faces on frame
-            frame, face_locations = frame_detect_dnn(frame, net, min_confidence=0.7)
+            # loop over the frames
+            for source, frame in frames.items():
 
-            if len(face_locations) > 0:
-                # build face encodings
-                face_encodings = face_recognition.face_encodings(frame, face_locations)
+                # detect faces on frame
+                frame, face_locations = frame_detect_dnn(frame, net, min_confidence=0.7)
 
-                # compare encodings with known faces
-                names = [
-                    frame_compare_faces(encoding, known_encodings, known_names)
-                    for encoding in face_encodings
-                ]
+                if len(face_locations) > 0:
+                    # build face encodings
+                    face_encodings = face_recognition.face_encodings(frame, face_locations)
 
-                for location, name in zip(face_locations, names):
-                    # annotate face boxes with names
-                    if debug:
-                        (top, right, bottom, left) = location
-                        y = top - 15 if top - 15 > 15 else top + 15
-                        cv2.putText(
-                            frame,
-                            name,
-                            (left, y),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75,
-                            (0, 255, 0),
-                            2,
-                        )
+                    # compare encodings with known faces
+                    names = [
+                        frame_compare_faces(encoding, known_encodings, known_names)
+                        for encoding in face_encodings
+                    ]
 
-                # dump to database
-                if name != "UNKNOWN":
-                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    if debug:
-                        print(f"{timestamp}, {name}, {source}")
+                    for location, name in zip(face_locations, names):
+                        # annotate face boxes with names
+                        if debug:
+                            (top, right, bottom, left) = location
+                            y = top - 15 if top - 15 > 15 else top + 15
+                            cv2.putText(
+                                frame,
+                                name,
+                                (left, y),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.75,
+                                (0, 255, 0),
+                                2,
+                            )
 
-                    # verify last seen timestamp
-                    if last_recognitions.get(f"{source} {name}") != timestamp:
-                        # db.insert_data(timestamp, name, source)
-                        last_recognitions[f"{source} {name}"] = timestamp
+                    # dump to database
+                    if name != "UNKNOWN":
+                        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        if debug:
+                            print(f"{timestamp}, {name}, {source}")
 
-        # show the output frames as montage
-        if debug:
-            montage_frames = list(frames.values())
-            montage = imutils.build_montages(
-                image_list=montage_frames,
-                image_shape=(montage_frames[0].shape[1], montage_frames[0].shape[0]),
-                montage_shape=(1, len(montage_frames)),
-            )[0]
-            cv2.imshow("Captured_frames", montage)
+                        # verify last seen timestamp
+                        if last_recognitions.get(f"{source} {name}") != timestamp:
+                            # db.insert_data(timestamp, name, source)
+                            last_recognitions[f"{source} {name}"] = timestamp
 
-            key = cv2.waitKey(1) & 0xFF
+            # show the output frames as montage
+            if debug:
+                montage_frames = list(frames.values())
+                montage = imutils.build_montages(
+                    image_list=montage_frames,
+                    image_shape=(montage_frames[0].shape[1], montage_frames[0].shape[0]),
+                    montage_shape=(1, len(montage_frames)),
+                )[0]
+                cv2.imshow("Captured_frames", montage)
 
-            # press q to quit
-            if key == ord("q"):
-                break
+                key = cv2.waitKey(1) & 0xFF
 
-            # press s to save montage
-            if key == ord("s"):
-                cv2.imwrite("montage.jpg", montage)
+                # press q to quit
+                if key == ord("q"):
+                    break
 
+                # press s to save montage
+                if key == ord("s"):
+                    cv2.imwrite("montage.jpg", montage)
+except Exception as e:
+    print(e)
+finally:
 # cleanup
 cv2.destroyAllWindows()
 jb.close_browsers()
