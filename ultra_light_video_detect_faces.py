@@ -2,9 +2,7 @@ import imutils
 import cv2
 import face_recognition
 import copy
-import onnx
-import onnxruntime as ort
-from onnx_tf.backend import prepare
+
 
 # import time
 from datetime import datetime
@@ -12,24 +10,33 @@ import pandas as pd
 from video_grabber import VideoGrabber
 from db_manager import DBManager
 from video_functions import frame_compare_faces
-from ultra_light import frame_detect_ultra
 
 
 # turn on display functions and other details
 debug = True
+
+# use faster (less accurate) detection
+use_hog = True
+
+if not use_hog:
+    import onnx
+    import onnxruntime as ort
+    from onnx_tf.backend import prepare
+    from ultra_light import frame_detect_ultra
+
+    # load the model, create runtime session & get input variable name
+    onnx_path = "ultra_light_model/ultra_light_640.onnx"
+    onnx_model = onnx.load(onnx_path)
+    predictor = prepare(onnx_model)
+    ort_session = ort.InferenceSession(onnx_path)
+    input_name = ort_session.get_inputs()[0].name
+
 
 # load known faces data
 known_names = pd.read_pickle("dataset/president_faces_df.pickle")["name"].to_list()
 known_encodings = pd.read_pickle("dataset/president_faces_df.pickle")[
     "face_encodings"
 ].to_list()
-
-# load the model, create runtime session & get input variable name
-onnx_path = "ultra_light_model/ultra_light_640.onnx"
-onnx_model = onnx.load(onnx_path)
-predictor = prepare(onnx_model)
-ort_session = ort.InferenceSession(onnx_path)
-input_name = ort_session.get_inputs()[0].name
 
 
 # video streams setup
@@ -54,9 +61,12 @@ while True:
         for source, frame in frames.items():
 
             # detect faces on frame
-            frame, face_locations = frame_detect_ultra(
-                frame, ort_session, input_name, min_confidence=0.7
-            )
+            if use_hog:
+                face_locations = face_recognition.face_locations(frame)
+            else:
+                frame, face_locations = frame_detect_ultra(
+                    frame, ort_session, input_name, min_confidence=0.7
+                )
 
             if len(face_locations) > 0:
                 # build face encodings
