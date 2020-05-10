@@ -58,11 +58,11 @@ def candidates_recognition():
                         if name != "UNKNOWN":
                             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             if debug:
-                                print(f"{timestamp}, {name}, {source}")
+                                logger.info(f"Recognized: {name} @ {source}")
 
                             # verify last seen timestamp
                             if last_recognitions.get(f"{source} {name}") != timestamp:
-                                # db.insert_data(timestamp, name, source)
+                                db.insert_data(timestamp, name, source)
                                 last_recognitions[f"{source} {name}"] = timestamp
 
             if debug:
@@ -77,7 +77,7 @@ def candidates_recognition():
 
                 # press s to save montage
                 if key == ord("s"):
-                    cv2.imwrite("montage.jpg", montage)
+                    cv2.imwrite(f"saved_montages/{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.jpg", montage)
 
     # cleanup
     cv2.destroyAllWindows()
