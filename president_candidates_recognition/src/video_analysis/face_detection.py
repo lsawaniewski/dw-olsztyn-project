@@ -3,6 +3,7 @@ import numpy as np
 from src.data.models.models import CaffeSSD
 from src.helpers.color_log import setup_logger
 
+
 class FaceDetector:
 
     def __init__(self, detection_model="caffe_ssd"):
@@ -10,6 +11,7 @@ class FaceDetector:
             self.detector = CaffeSSDDetector()
         else:
             raise ValueError("Unknown detection model")
+
 
 class CaffeSSDDetector:
 

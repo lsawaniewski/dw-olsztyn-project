@@ -3,6 +3,7 @@ import copy
 import cv2
 from src.helpers.color_log import setup_logger
 
+
 class VideoGrabber:
 
     def __init__(self, video_sources, scaling_factor=1):

@@ -3,6 +3,7 @@ import cv2
 import face_recognition
 from src.helpers.color_log import setup_logger
 
+
 class FaceRecognizer:
 
     def __init__(self, recognition_model="face_recognition"):
@@ -41,6 +42,7 @@ class FaceRecognizer:
         name = known_names[closest_index] if closest_distance < tolerance else "UNKNOWN"
 
         return name
+
 
 class FaceRecognition:
 
