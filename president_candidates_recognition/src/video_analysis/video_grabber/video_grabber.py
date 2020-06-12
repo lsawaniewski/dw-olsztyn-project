@@ -1,4 +1,5 @@
 import threading
+import time
 import copy
 import cv2
 from src.helpers.color_log import setup_logger
@@ -11,13 +12,16 @@ class VideoGrabber:
         self.video_sources = video_sources
         self.scaling_factor = scaling_factor
         self.frames = {}
+        self.events_dict = {name: threading.Event() for name in self.video_sources}
         self.run()
 
     def get_current_frames(self):
-        return copy.deepcopy(self.frames)
+        frames = copy.deepcopy(self.frames)
+        for name in self.events_dict:
+            self.events_dict[name].set()
+        return frames
 
     def run(self):
-
         for name, url in self.video_sources.items():
             thread = threading.Thread(
                 target=self.run_source_thread, args=(name, url), daemon=True
@@ -27,10 +31,11 @@ class VideoGrabber:
             self._logger.info(f"Thread: {name} started")
 
     def run_source_thread(self, name, url):
-
+        self.events_dict[name].set()
         cap = cv2.VideoCapture(url)
 
         while True:
+            self.events_dict[name].wait()
 
             ret, frame = cap.read()
             if frame is None:
@@ -46,6 +51,7 @@ class VideoGrabber:
                 frame = cv2.resize(frame, (int(new_width), int(new_height)))
 
             self.frames[name] = frame
+            self.events_dict[name].clear()
 
     def is_ready(self):
         return len(self.frames) == len(self.video_sources)
