@@ -1,14 +1,17 @@
 import cv2
 import numpy as np
+import face_recognition
 from src.data.models.models import CaffeSSD
 from src.helpers.color_log import setup_logger
 
 
 class FaceDetector:
 
-    def __init__(self, detection_model="caffe_ssd"):
+    def __init__(self, detection_model="caffe_ssd", **kwargs):
         if detection_model == "caffe_ssd":
-            self.detector = CaffeSSDDetector()
+            self.detector = CaffeSSDDetector(**kwargs)
+        elif detection_model == "face_recognition":
+            self.detector = FaceRecognitionDetector(**kwargs)
         else:
             raise ValueError("Unknown detection model")
 
@@ -57,6 +60,29 @@ class CaffeSSDDetector:
 
             # keep face location in face_recognition format
             face_locations.append((startY, endX, endY, startX))
+
+        if face_locations:
+            self._logger.debug(f"Found {len(face_locations)} faces: {face_locations}")
+
+        return frame, face_locations
+
+
+class FaceRecognitionDetector:
+
+    def __init__(self, model="hog"):
+        self._model = model
+        self._logger = setup_logger("FaceRecognitionDetector")
+
+    def detect(self, frame, min_confidence=0.7, draw_boxes=True):
+        face_locations = face_recognition.face_locations(frame, model=self._model)
+
+        # loop over the detections
+        for location in face_locations:
+
+            # draw the bounding box of the face
+            if draw_boxes:
+                (top, right, bottom, left) = location
+                cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
 
         if face_locations:
             self._logger.debug(f"Found {len(face_locations)} faces: {face_locations}")
