@@ -1,6 +1,5 @@
 from datetime import datetime
 import cv2
-
 from src.data.video.video_sources import info_channels
 from src.data.faces.face_encodings import FaceEncodings
 from src.video_analysis.face_detection import FaceDetector
@@ -22,13 +21,14 @@ def candidates_recognition():
     known_names, known_encodings = FaceEncodings(faces_path).load_lists()
 
     # load face detector
-    fd = FaceDetector(detection_model="caffe_ssd")
+    # fd = FaceDetector(detection_model="caffe_ssd")
+    fd = FaceDetector(detection_model="face_recognition", model="hog")
 
     # load face recognizer
     fr = FaceRecognizer(recognition_model="face_recognition")
 
     # video streams setup
-    vg = VideoGrabber(video_sources=info_channels, scaling_factor=4)
+    vg = VideoGrabber(video_sources=info_channels, scaling_factor=2)
 
     # database manager setup
     db = DBManager(db_config)
@@ -62,7 +62,7 @@ def candidates_recognition():
 
                             # verify last seen timestamp
                             if last_recognitions.get(f"{source} {name}") != timestamp:
-                                db.insert_data(timestamp, name, source)
+                                # db.insert_data(timestamp, name, source)
                                 last_recognitions[f"{source} {name}"] = timestamp
 
             if debug:
