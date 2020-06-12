@@ -1,5 +1,4 @@
 import threading
-import time
 import copy
 import cv2
 from src.helpers.color_log import setup_logger
